@@ -4,8 +4,7 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # The directory of your input and output data
 model_path = '/glade/work/chennuo/code/pangu/pangu_weather_6.onnx'
@@ -18,24 +17,32 @@ output_data_dir = sys.argv[3]
 
 # Set the behavier of onnxruntime
 options = ort.SessionOptions()
-options.enable_cpu_mem_arena=False
-options.enable_mem_pattern = False
-options.enable_mem_reuse = False
+options.log_severity_level = 2  # Info level, comment out if you don't need debug
+options.enable_cpu_mem_arena = True # Allow fallback to CPU if GPU option doesn't work, change to False if you strictly want to use GPU 
+options.enable_mem_pattern = True
+options.enable_mem_reuse = True
 # Increase the number for faster inference and more memory consumption
 options.intra_op_num_threads = 1
+options.execution_mode = ort.ExecutionMode.ORT_PARALLEL
 
 # Set the behavier of cuda provider
-cuda_provider_options = {'arena_extend_strategy':'kSameAsRequested',}
+cuda_provider_options = {
+    'arena_extend_strategy': 'kSameAsRequested',
+}
 
 # Initialize onnxruntime session for Pangu-Weather Models
-ort_session_6 = ort.InferenceSession(model_path, sess_options=options, providers=['CPUExecutionProvider'])
+ort_session_6 = ort.InferenceSession(
+    model_path,
+    providers=[
+        ('CUDAExecutionProvider', cuda_provider_options),    ]
+)
 
 # Loadint onnx model takes time, load it once per cycle, and forcast all members
 ninst_strings = [f'_{str(i).zfill(4)}' for i in range(1, ens_size+1)]
-print(ninst_strings)
+
 for ninst in ninst_strings:
+    old_date = sys.argv[1]  # reset to string
     
-    old_date = sys.argv[1] # reset to string
     input_sfc_fname = 'input_surface'+ninst+'.postassim-'+old_date+'.npy'
     input_upper_fname = 'input_upper'+ninst+'.postassim-'+old_date+'.npy'
 
@@ -45,9 +52,7 @@ for ninst in ninst_strings:
     
     output_sfc_fname = 'output_surface'+ninst+'.forecast-'+new_date+'.npy'
     output_upper_fname = 'output_upper'+ninst+'.forecast-'+new_date+'.npy'
-    
-    print(os.path.join(input_data_dir, input_upper_fname))
-    
+
     # Load the upper-air numpy arrays
     input = np.load(os.path.join(input_data_dir, input_upper_fname)).astype(np.float32)
     # Load the surface numpy arrays

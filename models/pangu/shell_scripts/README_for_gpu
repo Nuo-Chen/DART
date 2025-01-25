@@ -1,0 +1,23 @@
+# Chen Nuo 1/23/2025
+# For running Pangu-Weather with GPU option, the following configuration is tested on Google Colab:
+# - cuda 12.x
+# - cudnn 9.x
+# - onnxruntime-gpu==1.19
+# Running Pangu-Weather would require at least 34 GB GPU RAM and 8 GB CPU RAM when using A100 GPU
+# Running 10 instances from can take about 1~2 minutes
+
+# Which is installing the following packages on google colab before you run
+# It would be the best if you have figured the cuda and onnxruntime-gpu version out on your HPC. Do see https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements for version match-up.
+
+# Should I add the specific onnx version to pangu-dart-gpu.yml?
+!wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb
+!sudo dpkg -i cuda-keyring_1.1-1_all.deb
+!sudo apt-get update
+!sudo apt-get -y install cudnn
+!sudo apt-get -y install cudnn-cuda-12
+
+!pip install onnx
+!pip install onnxruntime-gpu==1.19
+
+
+

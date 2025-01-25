@@ -60,22 +60,16 @@ for ((i=1; i<=num_cycles; i++)); do
     echo "------ BEGIN -----"
     echo "------ RUN PANGU WEATHER-----"
     ######### run the pangu model #########
-    ### TODO: either run the ensemble members parallelly or run them on GPU
+    ### TODO: try to run the ensemble members parallelly on CPU
     ######### input: $output_dir/input_surface_000x.postassim-yyyy-mm-dd-hh.npy
     ######### input: $output_dir/input_upper_000x.postassim-yyyy-mm-dd-hh.npy
     ######### output: $output_dir/output_surface_000x.forecast-yyyy-mm-dd-hh+06.npy
     ######### output: $output_dir/output_upper_000x.forecast-yyyy-mm-dd-hh+06.npy
     
     ######### change the model onnx file location in interface_cpu/gpu.py
-    inst=1
-    while (( inst <= num_instances ))
-    do
-    	inst_string=$(printf "_%04d" $inst)
-    	python inference_cpu.py $old_date $inst_string $output_dir
-     
-    	let inst++
-    done
-    echo "------ RUN PANGU WEATHER-----"
+    python inference_cpu.py $old_date $num_instances $output_dir  || exit 10
+
+    echo "------ RUN PANGU WEATHER-----"    
     echo "------ DONE -----"
     
     
@@ -141,8 +135,9 @@ for ((i=1; i<=num_cycles; i++)); do
     while (( inst <= num_instances ))
     do
     	inst_string=$(printf "_%04d" $inst)
-       # !!!!!!!  IMPORTANT WARNING !!!!!
-       # for time step one, use ensemble version convert_dartout_to_npy_mem.py, or modify the pgout
+        # TODO:
+        # !!!!!!!  IMPORTANT WARNING !!!!!  < I don't think this is necessary anymore? need to test it.
+        # for time step one, use ensemble version convert_dartout_to_npy_mem.py, or modify the pgout
     	python convert_dartout_to_npy.py $new_date $inst_string $output_dir
      
     	let inst++
@@ -152,10 +147,14 @@ for ((i=1; i<=num_cycles; i++)); do
     echo "------ DONE -----"
     
     ######### rename the dart output_mean and output_sd
+    ######## TODO: change names with loop like in CAM-DART
     mv output_mean.nc $output_dir/output_mean_$new_date_short.nc
     mv output_sd.nc $output_dir/output_sd_$new_date_short.nc
     mv obs_seq.final $output_dir/obs_seq.final_$new_date_short
-    
+    mv output_priorinf_mean.nc $output_dir/output_priorinf_mean_$new_date_short
+    mv output_priorinf_sd.nc $output_dir/output_priorinf_sd_$new_date_short
+    mv forecast_priorinf_mean.nc $output_dir/forecast_priorinf_mean_$new_date_short
+    mv forecast_priorinf_sd.nc $output_dir/forecast_priorinf_sd_$new_date_short    
     
     # repeat and cycle
     
